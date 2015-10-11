@@ -43,6 +43,19 @@ export default class Session extends Controller {
         return true;
     }
 
+    @Route("Session:joinRoom")
+    async joinRoom(msg, conn) {
+        return {
+            room: {
+                id: 1337,
+                slug: "writhem",
+                name: "writhem"
+            },
+            connections: [],
+            media: []
+        }
+    }
+
     //http://stackoverflow.com/a/1349426
     makeid() {
         var text = "";

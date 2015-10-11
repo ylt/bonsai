@@ -20,6 +20,7 @@
     "amqplib": "^0.4.0",
     "bluebird": "^2.10.1",
     "config": "^1.16.0",
+    "eventemitter3": "^1.1.1",
     "mysql": "^2.9.0",
     "pm2": "^0.15.6",
     "sequelize": "^3.9.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "babel": "^5.8.23",
+    "eventemitter2": "^0.4.14",
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-watch": "^0.6.1",
