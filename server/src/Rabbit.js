@@ -1,6 +1,6 @@
 import {rabbit as config} from "config";
 import amqp from "amqplib";
-import EventEmitter3 from "eventemitter3";
+import {EventEmitter2} from "eventemitter2";
 
 export class Server {
     constructor(router) {
@@ -58,7 +58,7 @@ export class Server {
 
 export class Broadcast {
     constructor() {
-        this.emitter = new EventEmitter3({
+        this.emitter = new EventEmitter2({
             wildcard: true
         });
     }
@@ -70,11 +70,8 @@ export class Broadcast {
         this.q = await this.ch.assertQueue('', {exclusive: true});
     }
 
-    broadcast(topic, data, echo = true) {
+    broadcast(topic, data) {
         this.ch.publish(config.broadcastqueue, topic, new Buffer(JSON.stringify(data)));
-        if (echo !== false) {
-            this.emitter.emit(topic, data);
-        }
     }
 
     async listen() {
@@ -83,14 +80,13 @@ export class Broadcast {
             let key = msg.fields.routingKey;
             let data = JSON.parse(msg.content.toString());
 
-            this.emitter.emit(key, data);
+            this.emitter.emit(key, {event: key, data: data});
 
         }, {noAck: true});
     }
 
     subscribe(key) {
         this.ch.bindQueue(this.q.queue, config.broadcastqueue, key);
-        //todo: consider using em2 here.
     }
 
     unsubscribe(key) {

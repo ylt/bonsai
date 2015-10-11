@@ -28,6 +28,10 @@ function send(event, data) {
     });
 }
 
+process.on('unhandledRejection', function(error, promise) {
+    console.error("UNHANDLED REJECTION", error.stack);
+});
+
 var socket = io("http://localhost:1337");
 socket.on("connect", () => {
     console.log("connected");
@@ -39,5 +43,9 @@ socket.on("connect", () => {
     call("Session:joinRoom", {"slug": "writhem"}).then(response => {
         console.log("response", response);
     });
+
+    setTimeout(() => {
+        socket.disconnect();
+    }, 5000)
 
 });

@@ -101,7 +101,8 @@ class Connection {
     }
 
     send(event, data) {
-        this.socket.emit("broadcast", {event:data.event, data:data.data});
+        let payload = {event:event, data:data};
+        this.socket.emit("broadcast", payload);
     }
 }
 
@@ -135,16 +136,7 @@ class Session {
 
     disconnect = (connection) => {
         connection.rooms.forEach((room) => {
-            //delete this.rooms[room][connection];
-            room.delConnection(connection, room);
-            if (room.connections <= 0) {
-                del.push(room); //we can't delete during loop
-
-                //note: we're iterating user list, and deleting from global dict
-                // so is valid to delete while iterating ;)
-                room.deconstructor();
-                delete this.rooms[room.id];
-            }
+            this.roomDelConnection(room, connection, "disconnect");
         });
 
     };
@@ -183,9 +175,18 @@ class Session {
     };
 
     apiLeaveRoom = (connection, data, response) => {
-        this.rooms[response.id].delConnection(connection);
-        //todo: handle empty room
+        this.roomDelConnection(this.rooms[response.id], connection, "part");
     };
+
+    roomDelConnection(room, connection, reason) {
+        room.delConnection(connection, reason);
+        if (room.connections.length <= 0) {
+            //note: we're iterating user list, and deleting from global dict
+            // so is valid to delete while iterating ;)
+            room.deconstructor();
+            delete this.rooms[room.id];
+        }
+    }
 
 }
 
@@ -214,6 +215,7 @@ class Room {
 
     //from rabbitmq
     roomBroadcast = (data) => {
+        console.log("room broadcast", data);
         this.connections.forEach(conn => {
             conn.send(data.event, data.data);
         });
@@ -232,19 +234,27 @@ class Room {
 
         //trigger joined broadcast msg
         this.broadcast.broadcast(this.token+"join", {
+            slug: this.room.slug,
             user: connection.user
         });
+
+        console.log("connect (room "+this.room.id+", users: "+this.connections.length+")");
     };
 
     delConnection = (connection, reason) => {
         connection.off(this.token+"*", this.userSend); //unhook here
 
         var idx = this.connections.indexOf(connection);
-        if (idx > 0)
-            this.connections = this.connections.splice(idx, 1);
+
+        if (idx > -1)
+            this.connections.splice(idx, 1);
+
+        console.log("disconnect (remaining connections: "+this.connections.length+")");
 
         //trigger parted broadcast msg
         this.broadcast.broadcast(this.token+"part", {
+            event: "part",
+            slug: "writhem",
             user: connection.user,
             reason: reason
         });
